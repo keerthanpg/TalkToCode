@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.0/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.0/dist/semantic.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flexboxgrid@6.3.1/dist/flexboxgrid.min.css">
+    <!-- <link rel="icon" type="image/x-icon" href="./assets/logo.ico"> -->
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark-reasonable.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+    <link href="./style.css" rel="stylesheet"> 
+    <title>talktocode</title>
+  </head>
+  <body>
+    <div id="main-content" class="row center-xs">
+      <div id="spinny">
+        <div class="ui active inverted dimmer">
+          <div class="ui large text loader" id="loader">Querying...</div>
+        </div>
+        <p></p>
+        <p></p>
+        <p></p>
+      </div>
+      <div class="col-xs-12 col-md-12 center-xs">
+          <a href="/" style="text-decoration: none;">
+            <h1 id="jumbo-title">talktocode</h1>
+          </a>
+      </div>
+      <div class="row center-xs col-xs-12" id="qa">
+        <div class="ui action input col-xs-8" >
+          <input type="text" placeholder="Talk to Code!" id="talk-text">
+          <button class="ui red button" id="talk-button">Search</button>
+          <button class="ui red button" id="talk-button-2">Explain</button>
+        </div>
+      </div>
+      <div id="main-title"></div>
+      <div class="row center-xs col-xs-12" id="main">
+        
+      </div>
+      <div class="col-xs-12 center-xs footie">
+        <a class="col-xs-12 ui white label" href="https://github.com/nuwandavek/talktocode" target="_blank">
+          <i class="github icon"></i>
+            nuwandavek/talktocode
+        </a>
+        <p class="col-xs-12 normal-font fat-font" style="text-align: center; margin: 1rem;">Made with <i class="heart icon red"></i> by nuwandavek, keerthanpg</p>
+      </div>
+    </div>
+    <script>
+      res = {{payload|tojson}};
+
+      console.log(res);
+      text = ""
+      if (res['loctype'] == "folder"){
+        text+="<div class='code'>"
+        res['text'].forEach((a)=>{
+          text += "<div><a href='/?path="+a[0]+"'>"+a[0]+"</a><div>"
+        })
+        text+="<div>"
+
+      }
+      else if(res['loctype'] == "file"){
+        leftClass = "language-python"
+        res['text'].forEach((a, i)=>{
+          text += '<div class="col-xs-5 code" id="code-'+i+'"><pre><code class="language-python">'+a[0]+'</code></pre></div>'
+          text += '<div class="col-xs-5 summary" id="summary-"'+i+'><p>'+a[1]+'</p></div>'
+        })
+      }
+      else{
+        text = "";        
+      }
+      $("#main").html(text);
+      $("#main-title").html(res['parents'] + "/" + res['current']);
+      hljs.highlightAll();
+
+      $("#talk-button").click(()=>{
+        query = $("#talk-text").val()
+        console.log(query);
+        $("#spinny").show();
+
+        fetch('/answer?q='+query, {method: "GET"})
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          $("#spinny").hide();
+          text = ""
+          data.forEach((a, i)=>{
+          text += '<div class="col-xs-5 code" id="code-'+i+'"><pre><code class="language-python">'+a['blob']+'</code></pre></div>'
+          text += '<div class="col-xs-5 summary" id="summary-"'+i+'><p>'+a['summary']+'</p></div>'
+        })
+        $("#main").html(text);
+      $("#main-title").html("");
+      hljs.highlightAll();
+
+        });
+      })
+
+      $("#talk-button-2").click(()=>{
+        query = $("#talk-text").val()
+        console.log(query);
+        $("#spinny").show();
+
+        fetch('/explain?q='+query, {method: "GET"})
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          $("#spinny").hide();
+        $("#main").html('<div class="col-xs-5 code"><pre><code class="language-plaintext">'+data+'</code></pre></div>');
+      $("#main-title").html("");
+      hljs.highlightAll();
+
+        });
+      })
+
+    </script>
+    <script src="./jsmain.js"></script>
+  </body>
+</html>
